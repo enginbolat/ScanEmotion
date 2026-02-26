@@ -11,7 +11,7 @@ struct PressableIcon: View {
     var icon: Image
     var onPress: (() -> Void)?
     var isDisabled: Bool = false
-    
+
     var body: some View {
         Button(action: {
             guard !isDisabled else { return }

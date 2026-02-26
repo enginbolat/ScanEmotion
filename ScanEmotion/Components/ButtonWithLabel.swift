@@ -11,43 +11,40 @@ struct ButtonWithLabel: View {
     let label: String
     let onPress: () -> Void
     let isButtonDisabled: Bool
-    
+
     let leftImage: Image?
     let rightImage: Image?
-    let fontWeight: Font.Weight? = .regular
-    
+
     init(
-           label: String,
-           onPress: @escaping () -> Void,
-           isButtonDisabled: Bool,
-           leftImage: Image? = nil,
-           rightImage: Image? = nil,
-       ) {
-           self.label = label
-           self.onPress = onPress
-           self.isButtonDisabled = isButtonDisabled
-           self.leftImage = leftImage
-           self.rightImage = rightImage
-       }
-    
+        label: String,
+        onPress: @escaping () -> Void,
+        isButtonDisabled: Bool,
+        leftImage: Image? = nil,
+        rightImage: Image? = nil
+    ) {
+        self.label = label
+        self.onPress = onPress
+        self.isButtonDisabled = isButtonDisabled
+        self.leftImage = leftImage
+        self.rightImage = rightImage
+    }
+
     var body: some View {
         Button(action: { onPress() }) {
             HStack(spacing: 8) {
                 if let LeftImage = leftImage { LeftImage }
                 Text(label).fontWeight(.semibold)
                 if let RightImage = rightImage { RightImage }
-                
-            } .frame(maxWidth: .infinity)
+
+            }.frame(maxWidth: .infinity)
                 .padding()
                 .background(isButtonDisabled ? Color.gray : Color.blue)
                 .foregroundColor(.white)
                 .opacity(isButtonDisabled ? 0.5 : 1.0)
-                .cornerRadius(AppConstants.cornerRadious)
+                .cornerRadius(AppConstants.cornerRadius)
         }.disabled(isButtonDisabled)
     }
 }
-
-
 
 #Preview {
     ButtonWithLabel(

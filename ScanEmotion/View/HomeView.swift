@@ -8,25 +8,31 @@
 import SwiftUI
 
 struct HomeView: View {
-    @ObservedObject var viewModel: HomeViewModel
-    
-    init(viewModel: HomeViewModel) {
-        self.viewModel = viewModel
-    }
-    
+    @State private var viewModel = HomeViewModel()
+    @State private var errorMessage: String?
+
     var body: some View {
-        VStack() {
+        VStack {
             HomeHeaderView(title: viewModel.greetingText())
-            HomeMeasurementSectionView(data: viewModel.data,
+            HomeMeasurementSectionView(
+                data: viewModel.data,
                 onItemPress: viewModel.onItemPress
             )
-            ButtonWithLabel(label: "Ölçüm Yap",
-                            onPress: { viewModel.updateSheetType(key: .optionSelection) },
-                            isButtonDisabled: false,
-                            leftImage: Image(systemName: "camera")
+            ButtonWithLabel(
+                label: "Start Scan",
+                onPress: { viewModel.updateSheetType(key: .optionSelection) },
+                isButtonDisabled: false,
+                leftImage: Image(systemName: "camera")
             )
         }
         .padding(AppConstants.padding)
+        .overlay {
+            if viewModel.state == .loading {
+                ProgressView().scaleEffect(1.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.15))
+            }
+        }
         .sheet(item: $viewModel.selectedSheet) { item in
             switch item {
             case .optionSelection:
@@ -49,18 +55,31 @@ struct HomeView: View {
                     onImagePicked: viewModel.classifyImageSync
                 ).ignoresSafeArea()
             case .details:
-                DetailsView(measurement: viewModel.selectedMeasurement!)
-                    .modifier(GetHeightModifier(height: $viewModel.sheetHeight))
-                    .presentationDragIndicator(.visible)
-                    .presentationDetents([.height(viewModel.sheetHeight)])
-                    .padding(.top, AppConstants.padding)
+                if let measurement = viewModel.selectedMeasurement {
+                    DetailsView(measurement: measurement)
+                        .modifier(GetHeightModifier(height: $viewModel.sheetHeight))
+                        .presentationDragIndicator(.visible)
+                        .presentationDetents([.height(viewModel.sheetHeight)])
+                        .padding(.top, AppConstants.padding)
+                }
             }
         }
-        
+        .alert("Error", isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { errorMessage = nil }
+        } message: {
+            if let msg = errorMessage { Text(msg) }
+        }
+        .onChange(of: viewModel.state) { _, newState in
+            if case let .error(message) = newState { errorMessage = message }
+        }
     }
 }
 
 #Preview {
-    @StateObject var viewModel: HomeViewModel = .init()
-    HomeView(viewModel: viewModel)
+    HomeView()
+        .environment(UserSession())
+        .environment(AppRouter())
 }

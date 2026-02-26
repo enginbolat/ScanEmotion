@@ -8,29 +8,27 @@
 import SwiftUI
 
 struct Input: View {
-    
-    var placeholder: String = "Placeholder"
+    var placeholder: LocalizedStringKey = "Placeholder"
 
     var LeftIcon: Image?
     var leftButtonPressed: (() -> Void)?
 
     var RightIcon: Image?
     var rightButtonPressed: (() -> Void)?
-    
+
     var autocapitalization: TextInputAutocapitalization?
     var isSecure: Bool = false
     @Binding var isPasswordSecured: Bool
     @Binding var text: String
-    
+
     var body: some View {
-        
         HStack {
-            if let LeftIcon = LeftIcon {
-                PressableIcon(icon: LeftIcon, onPress: self.leftButtonPressed, isDisabled: self.leftButtonPressed == nil)
+            if let LeftIcon {
+                PressableIcon(icon: LeftIcon, onPress: leftButtonPressed, isDisabled: leftButtonPressed == nil)
             }
-            
+
             Group {
-                if isSecure && isPasswordSecured {
+                if isSecure, isPasswordSecured {
                     SecureField(placeholder, text: $text)
                 } else {
                     TextField(placeholder, text: $text)
@@ -39,26 +37,24 @@ struct Input: View {
             }
             .frame(height: 20)
             .textFieldStyle(.plain)
-          
-            if let RightIcon = RightIcon {
-                PressableIcon(icon: RightIcon, onPress: self.rightButtonPressed, isDisabled: self.rightButtonPressed == nil)
+
+            if let RightIcon {
+                PressableIcon(icon: RightIcon, onPress: rightButtonPressed, isDisabled: rightButtonPressed == nil)
             }
         }.padding()
-            .background(
-                RoundedRectangle(cornerRadius: AppConstants.cornerRadious).fill(Color(.systemGray6))
-            )
+            .glassBackground()
     }
 }
 
-
 #Preview {
-    Input(placeholder: "Preview",
-          LeftIcon: Image(systemName: "lock"),
-          leftButtonPressed: { },
-          RightIcon: Image(systemName: "eye"),
-          rightButtonPressed: { },
-          isSecure: true,
-          isPasswordSecured: .constant(true),
-          text: .constant("Password"),
+    Input(
+        placeholder: "Preview",
+        LeftIcon: Image(systemName: "lock"),
+        leftButtonPressed: {},
+        RightIcon: Image(systemName: "eye"),
+        rightButtonPressed: {},
+        isSecure: true,
+        isPasswordSecured: .constant(true),
+        text: .constant("Password")
     ).padding(AppConstants.padding)
 }

@@ -8,21 +8,21 @@
 import SwiftUI
 
 struct HomeHeaderView: View {
-    @EnvironmentObject var userSession: UserSession
-    @EnvironmentObject var router: AppRouter
+    @Environment(UserSession.self) var userSession
+    @Environment(AppRouter.self) var router
     let title: String
-    
+
     var body: some View {
         HStack {
             Text(title)
                 .font(.title)
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             NavigationLink(destination: ProfileView(appRouter: router, userSession: userSession)) {
                 Image(systemName: "person.circle")
                     .resizable()
-                    .frame(width: 24,height: 24)
+                    .frame(width: 24, height: 24)
                     .foregroundStyle(.gray)
             }
         }
@@ -31,6 +31,7 @@ struct HomeHeaderView: View {
 
 #Preview {
     HomeHeaderView(title: "Header")
+        .environment(UserSession())
+        .environment(AppRouter())
         .padding(AppConstants.padding)
 }
-

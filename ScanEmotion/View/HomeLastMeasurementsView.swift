@@ -1,5 +1,5 @@
 //
-//  LastMeasurementsView.swift
+//  HomeLastMeasurementsView.swift
 //  ScanEmotion
 //
 //  Created by Engin Bolat on 15.06.2025.
@@ -10,16 +10,11 @@ import SwiftUI
 struct HomeLastMeasurementsView: View {
     let data: [Measurement]
     let onItemPress: (Measurement) -> Void
-    
-    init(data: [Measurement], onItemPress: @escaping (Measurement) -> Void) {
-        self.data = data
-        self.onItemPress = onItemPress
-    }
-    
+
     var body: some View {
         VStack(spacing: 8) {
             if data.isEmpty {
-                Text("Hiç veri yok.")
+                Text("No data yet.")
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(EdgeInsets(top: 32, leading: 0, bottom: 32, trailing: 0))
@@ -36,18 +31,10 @@ struct HomeLastMeasurementsView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: AppConstants.cornerRadious)
-                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-        )
+        .glassBackground(in: RoundedRectangle(cornerRadius: AppConstants.cornerRadius))
     }
-    
-    @ViewBuilder
+
     private func measurementCard(for item: Measurement) -> some View {
-        var mainEmotionPercentageString: String {
-            "\(item.mainEmotion): \(String(format: "%.2f", item.mainEmotion.value * 100))%"
-        }
-        
         MeasurementCard(item: item, onItemPress: onItemPress)
     }
 }

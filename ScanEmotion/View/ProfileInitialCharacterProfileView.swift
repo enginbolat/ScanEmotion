@@ -11,7 +11,7 @@ struct ProfileInitialCharacterProfileView: View {
     let nameFirstKey: String
     let surnameFirstKey: String
     let photoUrl: String?
-    
+
     var body: some View {
         VStack {
             if photoUrl?.isEmpty ?? true {
@@ -25,19 +25,32 @@ struct ProfileInitialCharacterProfileView: View {
                 }
             } else {
                 if let urlString = photoUrl, let url = URL(string: urlString) {
-                    AsyncImage(url: url)
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case let .success(image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 72, height: 72)
+                                .clipShape(Circle())
+                        case .failure:
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(Color.gray)
+                        case .empty:
+                            ProgressView()
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
                 }
-                    
             }
         }
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: .infinity)
-                .foregroundStyle(Color.gray.opacity(0.2))
-        )
+        .glassBackground(in: RoundedRectangle(cornerRadius: .infinity))
     }
 }
-
 
 #Preview {
     ProfileInitialCharacterProfileView(nameFirstKey: "E", surnameFirstKey: "B", photoUrl: "")
