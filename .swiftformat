@@ -1,0 +1,62 @@
+# SwiftFormat 0.59+ configuration
+# https://github.com/nicklockwood/SwiftFormat
+
+--swiftversion 5.9
+
+# --- Indentation ---
+--indent 4
+--indentcase false
+--xcodeindentation disabled
+--tabwidth 4
+
+# --- Spacing & Whitespace ---
+--trimwhitespace always
+--linebreaks lf
+--maxwidth 120
+--nospaceoperators ..<,...
+
+# --- Semicolons ---
+--semicolons never
+
+# --- Commas ---
+# SwiftLint'te trailing_comma disabled olduğu için inline kullanıyoruz
+--commas inline
+
+# --- Self ---
+# Gereksiz self'i kaldır, closure capture listesinde otomatik korunur
+--self remove
+
+# --- Void ---
+--voidtype void
+
+# --- Closures ---
+--closingparen balanced
+--trailingclosures all
+
+# --- Arguments & Parameters ---
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--wrapreturntype preserve
+
+# --- Imports ---
+--importgrouping testable-last
+
+# --- Headers ---
+# Mevcut Xcode file header'larını koru
+--header ignore
+
+# --- Access Control ---
+--stripunusedargs closure-only
+
+# --- Marks ---
+# // MARK: formatını zorla (boşluk dahil)
+--marktypes always
+--markextensions always
+
+# --- Genel ---
+--redundanttype infer-locals-only
+--shortoptionals always
+
+# --- Exclude ---
+--exclude Pods,.build,*.generated.swift
