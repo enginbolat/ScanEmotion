@@ -7,18 +7,18 @@
 
 import SwiftUI
 
-protocol LastMeasurementsMoreViewModelProtocol: ObservableObject {
+protocol LastMeasurementsMoreViewModelProtocol {
     var selectedMeasurement: Measurement? { get set }
     var sheetHeight: CGFloat { get set }
-    
-    func onItemPress(to measurement:Measurement) 
+    func onItemPress(to measurement: Measurement)
 }
 
+@Observable
 final class LastMeasurementsMoreViewModel: LastMeasurementsMoreViewModelProtocol {
-    @Published var selectedMeasurement: Measurement?
-    @Published var sheetHeight: CGFloat = .zero
-    
-    func onItemPress(to measurement:Measurement) {
+    var selectedMeasurement: Measurement?
+    var sheetHeight: CGFloat = .zero
+
+    func onItemPress(to measurement: Measurement) {
         selectedMeasurement = measurement
     }
 }

@@ -5,16 +5,16 @@
 //  Created by Engin Bolat on 15.06.2025.
 //
 
-import Foundation
 import FirebaseFirestore
+import Foundation
 
 struct MainEmotion: Codable {
-    let name:String
-    let value:Float
+    let name: String
+    let value: Float
 }
 
 struct Measurement: Identifiable, Codable {
-    @DocumentID var id: String?  // Firestore'dan DocumentID otomatik gelir
+    @DocumentID var id: String? // Populated automatically by Firestore
 
     let mainEmotion: MainEmotion
     let angry: Float
@@ -27,7 +27,7 @@ struct Measurement: Identifiable, Codable {
     let date: Date
     let isDeleted: Bool
 
-    // Manual initializer (uygulamada yeni Measurement oluştururken)
+    /// Manual initializer used when creating a new Measurement in-app.
     init(
         id: String? = nil,
         angry: Float,
@@ -53,9 +53,9 @@ struct Measurement: Identifiable, Codable {
         self.date = date
         self.isDeleted = isDeleted
     }
-    
+
     var asDictionary: [String: Any] {
-        return [
+        [
             "angry": angry,
             "disgust": disgust,
             "fear": fear,

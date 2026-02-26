@@ -1,19 +1,19 @@
 import SwiftUI
-import CoreML
-import UIKit
 
 struct ContentView: View {
-    @EnvironmentObject var userSession: UserSession
-    @EnvironmentObject var router: AppRouter
-    
+    @Environment(UserSession.self) var userSession
+    @Environment(AppRouter.self) var router
+
     var body: some View {
         switch router.currentScreen {
         case .login: NavigationStack { LoginView(appRouter: router, userSession: userSession) }
-        case .home: NavigationStack { HomeView(viewModel: .init()) }
+        case .home: NavigationStack { HomeView() }
         }
     }
 }
 
 #Preview {
-    ContentView().environmentObject(UserSession())
+    ContentView()
+        .environment(UserSession())
+        .environment(AppRouter())
 }

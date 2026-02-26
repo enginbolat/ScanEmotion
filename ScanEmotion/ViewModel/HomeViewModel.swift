@@ -7,153 +7,152 @@
 
 import SwiftUI
 
-enum SheetType: Identifiable {
+enum SheetType: Identifiable, Hashable {
     case optionSelection, camera, gallery, details
-    var id: Int { hashValue }
+    var id: Self {
+        self
+    }
 }
 
-protocol HomeViewModelProtocol: ObservableObject {
+protocol HomeViewModelProtocol {
     var username: String { get set }
     var data: [Measurement] { get set }
-    var isSelectionSheetOpen: Bool { get set }
     var sheetHeight: CGFloat { get set }
     var selectedSheet: SheetType? { get set }
-    
+
     func greetingText() -> String
-    func onMeasureButtonPress() -> Void
     func classifyImage(_ uiImage: UIImage) async
 }
 
+@Observable
 final class HomeViewModel: HomeViewModelProtocol {
     var username: String
-    
-    @Published var data: [Measurement] = []
-    @Published var isSelectionSheetOpen: Bool = false
-    @Published var sheetHeight: CGFloat = .zero
-    
-    @Published var selectedSheet: SheetType?
-    @Published var selectedMeasurement: Measurement?
-    
-    @Published var image: UIImage?
-    @Published var predictionText: String = ""
-    
-    init() {
-        self.username = FirebaseService.shared.currentUser?.displayName ?? ""
+
+    var data: [Measurement] = []
+    var sheetHeight: CGFloat = .zero
+
+    var selectedSheet: SheetType?
+    var selectedMeasurement: Measurement?
+
+    var image: UIImage?
+    var state: ViewState = .idle
+
+    private let firebaseService: FirebaseServiceProtocol
+    private var classifyTask: Task<Void, Never>?
+
+    init(firebaseService: FirebaseServiceProtocol = FirebaseService.shared) {
+        self.firebaseService = firebaseService
+        username = firebaseService.currentUser?.displayName ?? ""
         fetchDataFromFirebase()
     }
-    
-    private func fetchDataFromFirebase() {
-        Task { [weak self] in
-            
-            guard let self = self else { return }
 
-            let measurements: [Measurement]
-            if let uid = FirebaseService.shared.currentUID {
-                measurements = await FirebaseService.shared.getAllMeasurements(uid: uid)
+    private func fetchDataFromFirebase() {
+        state = .loading
+        Task { [weak self] in
+            guard let self else { return }
+
+            let measurements: [Measurement] = if let uid = firebaseService.currentUID {
+                await firebaseService.getAllMeasurements(uid: uid)
             } else {
-                measurements = []
+                []
             }
 
             await MainActor.run {
                 self.data = measurements
+                self.state = .idle
             }
         }
     }
-    
-    
+
     func greetingText() -> String {
-        if username.isEmpty { return "Hoşgeldin!" }
-        return "Hoşgeldin, \(username)!"
+        if username.isEmpty { return String(localized: "Welcome!") }
+        return String(format: String(localized: "Welcome, %@!"), username)
     }
-    
-    func onMeasureButtonPress() {
-        isSelectionSheetOpen = true
-    }
-    
+
     func updateSheetType(key sheetType: SheetType) {
         selectedSheet = sheetType
     }
-    
-    func onItemPress(to measurement:Measurement) {
+
+    func onItemPress(to measurement: Measurement) {
         selectedMeasurement = measurement
         selectedSheet = .details
     }
-    
-    @MainActor
+
     func addMeasurementToFirestore(_ measurement: Measurement) async -> String {
-            let currentUserSession = await FirebaseService.shared.checkUserSession()
-            guard let currentUser = currentUserSession else { return "" }
-            
-            let addMeasurementResult = await FirebaseService.shared.addMeasurementToFirebase(
-                uid: currentUser.uid!,
-                measurement: measurement
-            )
-            if addMeasurementResult != "error" {
-                return addMeasurementResult
-            }
-            else {
-                return ""
-            }
+        let currentUserSession = await firebaseService.checkUserSession()
+        guard let currentUser = currentUserSession, let uid = currentUser.uid else { return "" }
+        return await firebaseService.addMeasurementToFirebase(uid: uid, measurement: measurement)
     }
-    
-    
+
     func classifyImageSync(_ uiImage: UIImage) {
-        Task {
+        classifyTask?.cancel()
+        classifyTask = Task { [weak self] in
+            guard let self else { return }
             await classifyImage(uiImage)
         }
     }
-    
+
     @MainActor
-    private func setAndUploadMeasurement(probabilities: Array<Float>, labels: Array<String>) {
-        Task {
-            if let maxIndex = probabilities.firstIndex(of: probabilities.max() ?? 0.0) {
-                let dominantEmotion = labels[maxIndex]
-                let dominantValue = probabilities[maxIndex]
-                
-                var newElement = Measurement(
-                    angry: probabilities[0],
-                    disgust: probabilities[1],
-                    fear: probabilities[2],
-                    happy: probabilities[3],
-                    sad: probabilities[4],
-                    surprised: probabilities[5],
-                    spontaneity: probabilities[6],
-                    mainEmotion: MainEmotion(name: dominantEmotion, value: dominantValue)
-                )
-                let documentId = await addMeasurementToFirestore(newElement)
-                newElement.id = documentId
-                data.append(newElement)
-                
-            } else {
-                predictionText = "Baskın duygu tespit edilemedi."
-            }
-        }
-    }
-    
-    @MainActor
-    func classifyImage(_ uiImage: UIImage) async {
-            guard let inputArray = imageToMultiArray(image: uiImage) else {
-                predictionText = "Görüntü dönüştürülemedi."
+    private func setAndUploadMeasurement(probabilities: [Float], labels: [String]) {
+        Task { [weak self] in
+            guard let self else { return }
+
+            guard probabilities.count >= Emotion.allCases.count else {
+                state = .error(String(localized: "Emotion analysis failed: insufficient data."))
                 return
             }
 
-            do {
-                let model = try EmotionModel()
-                let prediction = try model.prediction(inputs: inputArray)
-                let raw = prediction.Identity
-                let logits = (0..<raw.count).map { raw[$0].floatValue }
-                let expValues = logits.map { exp($0) }
-                let sumExp = expValues.reduce(0, +)
-                let probabilities = expValues.map { $0 / sumExp }
-                
-                let result = zip(AppConstants.emotions, probabilities)
-                    .map { "\($0): \(String(format: "%.2f", $1 * 100))%" }
-                    .joined(separator: "\n")
-
-                predictionText = result
-                setAndUploadMeasurement(probabilities: probabilities, labels: AppConstants.emotions)
-            } catch {
-                predictionText = "Tahmin yapılamadı: \(error.localizedDescription)"
+            guard let maxIndex = probabilities.firstIndex(of: probabilities.max() ?? 0.0) else {
+                state = .error(String(localized: "Could not detect dominant emotion."))
+                return
             }
+
+            var newElement = Measurement(
+                angry: probabilities[Emotion.angry.rawValue],
+                disgust: probabilities[Emotion.disgust.rawValue],
+                fear: probabilities[Emotion.fear.rawValue],
+                happy: probabilities[Emotion.happy.rawValue],
+                sad: probabilities[Emotion.sad.rawValue],
+                surprised: probabilities[Emotion.surprised.rawValue],
+                spontaneity: probabilities[Emotion.spontaneity.rawValue],
+                mainEmotion: MainEmotion(name: labels[maxIndex], value: probabilities[maxIndex])
+            )
+            let documentId = await addMeasurementToFirestore(newElement)
+            newElement.id = documentId
+            data.append(newElement)
         }
+    }
+
+    @MainActor
+    func classifyImage(_ uiImage: UIImage) async {
+        guard !Task.isCancelled else { return }
+        state = .loading
+        guard let inputArray = imageToMultiArray(image: uiImage) else {
+            state = .error(String(localized: "Failed to process image."))
+            return
+        }
+
+        do {
+            let model = try EmotionModel()
+            let prediction = try model.prediction(inputs: inputArray)
+            let raw = prediction.Identity
+            let logits = (0..<raw.count).map { raw[$0].floatValue }
+            let expValues = logits.map { exp($0) }
+            let sumExp = expValues.reduce(0, +)
+            let probabilities = expValues.map { $0 / sumExp }
+
+            guard probabilities.count == Emotion.allCases.count else {
+                state = .error(String(localized: "Unexpected model output format."))
+                return
+            }
+
+            state = .idle
+            setAndUploadMeasurement(
+                probabilities: probabilities,
+                labels: Emotion.allCases.map(\.localizedName)
+            )
+        } catch {
+            state = .error(error.localizedDescription)
+        }
+    }
 }

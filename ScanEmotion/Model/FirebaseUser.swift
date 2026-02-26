@@ -5,8 +5,8 @@
 //  Created by Engin Bolat on 16.06.2025.
 //
 
-import Foundation
 import FirebaseAuth
+import Foundation
 
 struct FirebaseUser {
     let uid: String?
@@ -16,10 +16,20 @@ struct FirebaseUser {
     let photoURL: URL?
 
     init(user: User) {
-        self.uid = user.uid
-        self.displayName = user.displayName
-        self.email = user.email
-        self.phoneNumber = user.phoneNumber
-        self.photoURL = user.photoURL
+        uid = user.uid
+        displayName = user.displayName
+        email = user.email
+        phoneNumber = user.phoneNumber
+        photoURL = user.photoURL
+    }
+}
+
+extension FirebaseUser {
+    init(uid: String?, displayName: String?, email: String?, phoneNumber: String? = nil, photoURL: URL? = nil) {
+        self.uid = uid
+        self.displayName = displayName
+        self.email = email
+        self.phoneNumber = phoneNumber
+        self.photoURL = photoURL
     }
 }

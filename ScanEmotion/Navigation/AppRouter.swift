@@ -7,11 +7,12 @@
 
 import SwiftUI
 
-class AppRouter: ObservableObject {
+@Observable
+class AppRouter {
     enum Screen {
         case login
         case home
     }
-    
-    @Published var currentScreen: Screen = .login
+
+    var currentScreen: Screen = .login
 }

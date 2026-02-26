@@ -5,23 +5,23 @@
 //  Created by Engin Bolat on 14.06.2025.
 //
 
-import SwiftUI
 import FirebaseCore
+import SwiftUI
 
 @main
 struct ScanEmotionApp: App {
-    @StateObject private var appRouter = AppRouter()
-    @StateObject private var userSession = UserSession()
+    @State private var appRouter = AppRouter()
+    @State private var userSession = UserSession()
 
     init() {
         FirebaseApp.configure()
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(appRouter)
-                .environmentObject(userSession)
+                .environment(appRouter)
+                .environment(userSession)
         }
     }
 }

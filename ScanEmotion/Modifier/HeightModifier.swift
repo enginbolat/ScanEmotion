@@ -1,5 +1,5 @@
 //
-//  GetHeightModifier.swift
+//  HeightModifier.swift
 //  ScanEmotion
 //
 //  Created by Engin Bolat on 15.06.2025.
@@ -13,9 +13,7 @@ struct GetHeightModifier: ViewModifier {
     func body(content: Content) -> some View {
         content.background(
             GeometryReader { geo -> Color in
-                DispatchQueue.main.async {
-                    height = geo.size.height
-                }
+                Task { @MainActor in height = geo.size.height }
                 return Color.clear
             }
         )
